@@ -39,12 +39,15 @@ function httpbl_activated() {
 // Delete table when plugin is deactivated
 yourls_add_action('deactivated_httpBL/plugin.php', 'httpbl_deactivate');
 function httpbl_deactivate() {
-	global $ydb;
+	$httpbl_table_drop = yourls_get_option('httpbl_table_drop');
+	if ( $httpbl_table_drop !== "false" ) {
+		global $ydb;
 	
-	$init = yourls_get_option('httpbl_init');
-	if ($init !== false) {
-		yourls_delete_option('httpbl_init');
-		$ydb->query("DROP TABLE IF EXISTS httpbl");
+		$init = yourls_get_option('httpbl_init');
+		if ($init !== false) {
+			yourls_delete_option('httpbl_init');
+			$ydb->query("DROP TABLE IF EXISTS httpbl");
+		}
 	}
 }
 
