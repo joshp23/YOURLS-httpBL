@@ -25,7 +25,7 @@ if( !defined( 'YOURLS_ABSPATH' ) ) die();
 				<form method="post">
 					<h3>Project Honeypot API Key</h3>
 
-					<p>In order to use http:BL you need to have a Project Honeypot API key. For information on how to become a member of the project and get yourse;f a free key, please click <a href="https://www.projecthoneypot.org/" target="_blank">here</a>. Otherwise, please enter your key below.</p>
+					<p>In order to use http:BL you need to have a Project Honeypot API key. For information on how to become a member of the project and get yourself a free key, please click <a href="https://www.projecthoneypot.org/" target="_blank">here</a>. Otherwise, please enter your key below.</p>
 					<p><label for="httpbl_api_key">Your Key  </label> <input type="text" size=60 id="httpbl_api_key" name="httpbl_api_key" value="%httpbl_api_key%" /></p>
 
 					<h3>Block Page</h3>
