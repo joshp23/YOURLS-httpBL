@@ -15,7 +15,7 @@ if( !defined( 'YOURLS_ABSPATH' ) ) die();
 
 			<div class="wrap_unfloat">
 				<ul id="headers" class="toggle_display stat_tab">
-					<li class="selected"><a href="#stat_tab_behavior"><h2>Core Behavior</h2></a></li>
+					<li class="selected"><a href="#stat_tab_behavior"><h2>http:BL Config</h2></a></li>
 					<li><a href="#stat_tab_httpBL_wl"><h2>White List</h2></a></li>
 					<li style="display:%log_vis%;"><a href="#stat_tab_logs"><h2>Logs</h2></a></li>
 				</ul>
