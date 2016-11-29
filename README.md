@@ -3,7 +3,7 @@ An implimentation of Project Honeypot's http:BL for YOURLS
 
 By Josh Panter [Unfettered](https://unfettered.net).
 
-HTTP:BL is a black list service from [Project Honeypot](https://www.projecthoneypot.org) with an API that is trivial to hook into. While other spam management services & plugins, such as [Phishtank](https://github.com/joshp23/YOURLS-Phishtank-2.0), can check outgoing links, content submissions, and re-check old redirects, Project Honeypot and HTTP:BL aim to act as a gatekeeper, stopping malicious users before they get a chance to even get past the door of your website, and long before they can do any damage.
+http:BL is a black list service from [Project Honeypot](https://www.projecthoneypot.org) with an API that is trivial to hook into. While other spam management services & plugins, such as [Phishtank](https://github.com/joshp23/YOURLS-Phishtank-2.0), can check outgoing links, content submissions, and re-check old redirects, Project Honeypot and http:BL aim to act as a gatekeeper, stopping malicious users before they get a chance to even get past the door of your website, and long before they can do any damage.
 
 This plugin can help filter out spam submissions on a YOURLS public interface _and_ on the API. It will redirect any bad IP to an informative and customization friendly block/intercept page written with Bootstrap where any human users will be able to easily set a cookie and access the YOURLS installation. For the API users, it will simply send back an Error 403.
 
@@ -14,6 +14,7 @@ Here are a few of HTTP:BL's features
 3. Granular log keeping. Log only the types of events that you want, or none at all.
 4. Flush the log table and start fresh whenever you want.
 5. Self-managing: this plugin will (optionally) drop its tables when deactivated, and will create its own tables on activation.
+6. NEW: Whitelist IP addressess to skip checks and 1-click add the current IP.
 
 ## REQUIREMENTS
 
@@ -23,8 +24,8 @@ Here are a few of HTTP:BL's features
 
 ### INSTALLATION
 
-1. Place the httpBL folder in YOURLS/user/plugins
-2. Activate HTTP:BL for Yourls in the Admin interface - sql tables should be made automatically
+1. Place the httpBL folder in YOURLS/user/plugins/
+2. Activate http:BL for Yourls in the Admin interface - sql tables should be made automatically
 3. Set options in the HTTP:BL options page. The default options are just fine. Clicking submit on various forms will enter the default values into the sql tables, but null values all fall back to default actions as well.
  
 
