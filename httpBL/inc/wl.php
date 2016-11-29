@@ -20,12 +20,17 @@ function httpBL_wl_mgr() {
 function httpBL_wl_list() {
 
 	global $ydb;
-
+	$cip = yourls_get_ip();
+	$q = httpBL_wl_chk($cip);
+	if ($q == true) { 
+		$a = 'is';
+	} else {
+		$a = 'is not';
+	}
 	echo <<<HTML
 		<div  id="stat_tab_httpBL_wl" class="tab">
 			<h3>http:BL White List</h3>
-			<p>Any IP listed here will skip http:BL checks.</p>
-			<form method="post">
+			<p>Any IP listed here will skip http:BL checks. Your currnet IP: <strong>$cip</strong> $a in the white list.</p>			<form method="post">
 				<table id="main_table" class="tblSorter" border="1" cellpadding="5" style="border-collapse: collapse">
 					<thead>
 						<tr>
