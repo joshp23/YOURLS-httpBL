@@ -12,83 +12,98 @@ if( !defined( 'YOURLS_ABSPATH' ) ) die();
 
 require ('inc/db.php');
 require ('inc/sys.php');
+require ('inc/wl.php');
 
-// check for "is human/not a bot" cookie
-httpbl_human_check();
+// check for cookie & whitelist
+$is = yourls_get_option('httpBL_active');
+if ( $is == true) httpBL_human_check(); 
 
 
 // Register admin forms
-yourls_add_action( 'plugins_loaded', 'httpbl_add_pages' );
-function httpbl_add_pages() {
-        yourls_register_plugin_page( 'httpbl', 'HTTP:BL', 'httpbl_do_page' );
+yourls_add_action( 'plugins_loaded', 'httpBL_add_pages' );
+function httpBL_add_pages() {
+        yourls_register_plugin_page( 'httpBL', 'HTTP:BL', 'httpBL_do_page' );
 }
-// Admin page 0 - structure
-function httpbl_do_page() {
+// Admin page - structure
+function httpBL_do_page() {
 
 	// CHECK if CORE options form was submitted
-	httpbl_update_op_core();
+	httpBL_update_op_core();
 	
 	// Retreive CORE settings & set appropriate values
 	
 	// API Key
-	$httpbl_api_key = yourls_get_option( 'httpbl_api_key' );
+	$httpBL_api_key = yourls_get_option( 'httpBL_api_key' );
 	
 	// Custom http:BL block page
-	$httpbl_cstm_block_tgl = yourls_get_option( 'httpbl_cstm_block_tgl' );
-	if ($httpbl_cstm_block_tgl == "true") {
+	$httpBL_cstm_block_tgl = yourls_get_option( 'httpBL_cstm_block_tgl' );
+	if ($httpBL_cstm_block_tgl == "true") {
 		$url_chk = 'checked';
 	} else {
 		$url_chk = null;
 	}
-	$httpbl_cstm_block = yourls_get_option( 'httpbl_cstm_block' );
+	$httpBL_cstm_block = yourls_get_option( 'httpBL_cstm_block' );
+	
+	// Preserve white list on deactivate?
+	$httpBL_table_drop_wl = yourls_get_option( 'httpBL_table_drop_wl' );
+	if ($httpBL_table_drop_wl !== "false") {
+		$drop_chk_wl = 'checked';
+	} else {
+		$drop_chk_wl = null;
+	}
 	
 	// Preserve logs on deactivate?
-	$httpbl_table_drop = yourls_get_option( 'httpbl_table_drop' );
-	if ($httpbl_table_drop !== "false") {		// default = true
-		$drop_chk = 'checked';
+	$httpBL_table_drop_log = yourls_get_option( 'httpBL_table_drop_log' );
+	if ($httpBL_table_drop_log !== "false") {		// default = true
+		$drop_chk_log = 'checked';
 	} else {
-		$drop_chk = null;
+		$drop_chk_log = null;
 	}
 	
 	// Log Blocked visitors?		
-	$httpbl_log_blocked = yourls_get_option( 'httpbl_log_blocked' );
-	if ($httpbl_log_blocked == "true") {
+	$httpBL_log_blocked = yourls_get_option( 'httpBL_log_blocked' );
+	if ($httpBL_log_blocked == "true") {
 		$lb_chk = 'checked';
 	} else {
 		$lb_chk = null;
 	}
 	
 	// Log Unblocked visitors?		
-	$httpbl_log_unblocked = yourls_get_option( 'httpbl_log_unblocked' );
-	if ($httpbl_log_unblocked == "true") {
+	$httpBL_log_unblocked = yourls_get_option( 'httpBL_log_unblocked' );
+	if ($httpBL_log_unblocked == "true") {
 		$lub_chk = 'checked';
 	} else {
 		$lub_chk = null;
 	}
 	
 	// Show log tab?
-	if ( ($httpbl_log_blocked == "true") || ($httpbl_log_unblocked == "true") ) {
+	if ( ($httpBL_log_blocked == "true") || ($httpBL_log_unblocked == "true") ) {
 		$log_vis = 'inline';
 	} else { 
 		$log_vis = 'none';
 	}
 	
-	// CHECK if the DATABASE FLUSH form was submitted
-	httpbl_flush_logs();
+	// CHECK if the DATABASE FLUSH LOGS form was submitted
+	httpBL_flush_logs();
+	
+	// CHECK if the DATABASE FLUSH WL form was submitted
+	httpBL_flush_wl();
 
 	// Create nonce
-	$nonce = yourls_create_nonce( 'httpbl' );
+	$nonce = yourls_create_nonce( 'httpBL' );
 
 	// Main interface html
 	$vars = array();
-		$vars['httpbl_api_key'] = $httpbl_api_key;
-		$vars['httpbl_cstm_block_tgl'] = $httpbl_cstm_block_tgl;
-		$vars['httpbl_cstm_block'] = $httpbl_cstm_block;
-		$vars['httpbl_table_drop'] = $httpbl_table_drop;
-		$vars['httpbl_log_blocked'] = $httpbl_log_blocked;
-		$vars['httpbl_log_unblocked'] = $httpbl_log_unblocked;
+		$vars['httpBL_api_key'] = $httpBL_api_key;
+		$vars['httpBL_cstm_block_tgl'] = $httpBL_cstm_block_tgl;
+		$vars['httpBL_cstm_block'] = $httpBL_cstm_block;
+		$vars['httpBL_table_drop_wl'] = $httpBL_table_drop_wl;
+		$vars['httpBL_table_drop_log'] = $httpBL_table_drop_log;
+		$vars['httpBL_log_blocked'] = $httpBL_log_blocked;
+		$vars['httpBL_log_unblocked'] = $httpBL_log_unblocked;
 		$vars['url_chk'] = $url_chk;
-		$vars['drop_chk'] = $drop_chk;
+		$vars['drop_chk_log'] = $drop_chk_log;
+		$vars['drop_chk_wl'] = $drop_chk_wl;
 		$vars['lb_chk'] = $lb_chk;
 		$vars['lub_chk'] = $lub_chk;
 		$vars['log_vis'] = $log_vis;
@@ -100,20 +115,45 @@ function httpbl_do_page() {
 	$opt_view = preg_replace_callback( '/%([^%]+)?%/', function( $match ) use( $vars ) { return $vars[ $match[1] ]; }, $opt_view );
 
 	echo $opt_view;
-
-	httpbl_log_view();
+	
+	// Whitelist page - check inc/wl.php
+	httpBL_wl_mgr($nonce);
+	
+	// log view page
+	httpBL_log_view($log_vis,$nonce);
+	
+	// Close the initial html divs opened in opt.php
+			echo "</div>\n";
+		echo "</div>\n";
+	echo "</div>\n";
 }
-// Display page 0.1 - log view
-function httpbl_log_view() {
+// Admin page - log view
+function httpBL_log_view($log_vis,$nonce) {
 	// should we bother with this data, has the "nuke" option been set?"
-	$log_blocked = yourls_get_option( 'httpbl_log_blocked' );
-	$log_unblocked = yourls_get_option( 'httpbl_log_unblocked' );
+	$log_blocked = yourls_get_option( 'httpBL_log_blocked' );
+	$log_unblocked = yourls_get_option( 'httpBL_log_unblocked' );
 	if ( ($log_blocked == "true") || ($log_unblocked == "true") ) {
 		// Log are checked ~ this picks up where opt.0.php leaves off.
 		global $ydb;
 		echo <<<HTML
+		<div style="display:$log_vis;" id="stat_tab_logs" class="tab">
+
+			<h3>Empty Log Table</h3>
+
+			<form method="post">
+				<div class="checkbox">
+				  <label>
+					<input name="httpBL_flush_logs" type="hidden" value="no" />
+					<input name="httpBL_flush_logs" type="checkbox" value="yes"> Check here and FLUSH! to empty the logs.
+				  </label>
+				</div>
+				<input type="hidden" name="nonce" value="$nonce" />
+				<p><input type="submit" value="FLUSH!" /></p>
+			</form>
 			<h3>http:BL Log Table</h3>
-			<p>These values are from Project Honeypot. More information on that can be found <a href="https://www.projecthoneypot.org/httpbl_api.php" target="_blank">here</a>.</p>
+			
+			<p>These values are from Project Honeypot. More information on that can be found <a href="https://www.projecthoneypot.org/httpBL_api.php" target="_blank">here</a>.</p>
+			
 				<table id="main_table" class="tblSorter" border="1" cellpadding="5" style="border-collapse: collapse">
 					<thead>
 						<tr>
@@ -121,16 +161,14 @@ function httpbl_log_view() {
 							<th>Action</th>
 							<th>Type</th>
 							<th>Score</th>
-							<th>Activity</th>
+							<th>Recency</th>
 							<th>Time of Incident</th>
 						</tr>
 					</thead>
 					<tbody>
 HTML;
-		
 		// populate table rows with flag data if there is any
-		$table = 'httpbl';
-		$logs = $ydb->get_results("SELECT * FROM `$table` ORDER BY timestamp DESC");
+		$logs = $ydb->get_results("SELECT * FROM `httpBL_log` ORDER BY timestamp DESC");
 		$found_rows = false;
 		if($logs) {
 			$found_rows = true;
@@ -158,10 +196,6 @@ HTML;
 				echo "</tbody>\n";
 			echo "</table>\n";
 	}
-	// close log div and the rest of the settings page
-			echo "</div>\n";
-		echo "</div>\n";
-		echo "</div>\n";
 	echo "</div>\n";
 }
 ?>
