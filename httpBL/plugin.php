@@ -123,7 +123,6 @@ function httpBL_do_page() {
 	httpBL_log_view($log_vis,$nonce);
 	
 	// Close the initial html divs opened in opt.php
-			echo "</div>\n";
 		echo "</div>\n";
 	echo "</div>\n";
 }
