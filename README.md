@@ -42,7 +42,7 @@ include 'header.php';
 #### NOTE: The sql table may need to be added manually using httpBL/inc/httpBL.sql 
 
 ### TODO:
-1. Add honeypot "quicklinks" to all rendered pages
+1. Add dynamic and randomized honeypot "quicklinks" to all rendered pages - this will likely come in the form of a custom index page, or footer script.
 
 ### CREDITS
 Scripts used for inspiration and/or copypasta:
