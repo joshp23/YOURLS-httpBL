@@ -1,20 +1,18 @@
 # YOURLS-HTTP:BL
 An implimentation of Project Honeypot's http:BL for YOURLS
 
-By Josh Panter [Unfettered](https://unfettered.net).
-
-http:BL is a black list service from [Project Honeypot](https://www.projecthoneypot.org) with an API that is trivial to hook into. While other spam management services & plugins, such as [Phishtank](https://github.com/joshp23/YOURLS-Phishtank-2.0), can check outgoing links, content submissions, and re-check old redirects, Project Honeypot and http:BL aim to act as a gatekeeper, stopping malicious users before they get a chance to even get past the door of your website, and long before they can do any damage.
+http:BL is a black list service from [Project Honeypot](https://www.projecthoneypot.org) with an API that is trivial to hook into. While other spam management services & plugins, such as [Phishtank](https://github.com/joshp23/YOURLS-Phishtank-2.0), can check outgoing links, content submissions, and re-check old redirects, Project Honeypot's http:BL acts as a gatekeeper, stopping malicious users at the door before they can do any damage.
 
 This plugin can help filter out spam submissions on a YOURLS public interface _and_ on the API. It will redirect any bad IP to an informative and customization friendly block/intercept page written with Bootstrap where any human users will be able to easily set a cookie and access the YOURLS installation. For the API users, it will simply send back an Error 403.
 
 Here are a few of HTTP:BL's features
 
-1. All settings (and logs) are in the admin interface, no hand editing of any files (unless you want to)
+1. All logs and settings are in the admin interface, no hand editing of any files (unless you want to)
 2. Use a custom intercept page for flagged IP's. Edit the template, or redirect to your own URL.
-3. Granular log keeping. Log only the types of events that you want, or none at all.
+3. Granular log keeping: log only event types that you want, or none at all.
 4. Flush the log table and start fresh whenever you want.
 5. Self-managing: this plugin will (optionally) drop its tables when deactivated, and will create its own tables on activation.
-6. NEW: Whitelist IP addressess to skip checks and 1-click add the current IP.
+6. Whitelist IP addressess to skip checks; autodetection of and 1-click addition of the current IP.
 
 ## REQUIREMENTS
 
@@ -39,7 +37,7 @@ require_once( dirname(__FILE__).'/includes/load-yourls.php' );
 include 'header.php';
 ```
 
-#### NOTE: The sql table may need to be added manually using httpBL/inc/httpBL.sql 
+#### NOTE: The sql table may need to be added manually using httpBL/assets/httpBL.sql 
 
 ### TODO:
 1. Add dynamic and randomized honeypot "quicklinks" to all rendered pages - this will likely come in the form of a custom index page, or footer script.
@@ -53,7 +51,7 @@ Scripts used for inspiration and/or copypasta:
 
 ===========================
 
-    Copyright (C) 2016 Josh Panter
+    Copyright (C) 2016 - 2017 Josh Panter
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
