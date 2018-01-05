@@ -3,13 +3,13 @@
 Plugin Name: HTTP:BL
 Plugin URI: https://github.com/joshp23/YOURLS-httpBL
 Description: An implementation of Project Honeypot's http:BL for YOURLS
-Version: 2.0.1
+Version: 2.0.2
 Author: Josh Panter
 Author URI: https://unfettered.net
 **/
 // No direct call
 if( !defined( 'YOURLS_ABSPATH' ) ) die();
-httpBL_human_check(); 
+if (yourls_get_option('httpBL_init_log') === true) httpBL_human_check(); 
 /*
  *
  *	Admin Page
@@ -33,12 +33,12 @@ function httpBL_do_page() {
 	$opt = httpBL_getops();
 
 	// Set some values for display
-	$url_chk 		= ( $opt[1] == "true" ? 'checked' : null );	// Use custom http:BL block page?
+	$url_chk 	= ( $opt[1] == "true" ? 'checked' : null );	// Use custom http:BL block page?
 	$drop_chk_wl 	= ( $opt[3] == "true" ? 'checked' : null );	// Drop white list on deactivate?
 	$drop_chk_log 	= ( $opt[4] == "true" ? 'checked' : null );	// Drop logs on deactivate?
-	$lb_chk 		= ( $opt[5] == "true" ? 'checked' : null );	// Log Blocked visitors?
-	$lub_chk 		= ( $opt[6] == "true" ? 'checked' : null );	// Log Unblocked visitors?
-	$log_vis 		= ( $opt[5] == "true" || $opt[6] == "true" ? 'inline' : 'none' );	// Show log tab?
+	$lb_chk 	= ( $opt[5] == "true" ? 'checked' : null );	// Log Blocked visitors?
+	$lub_chk	= ( $opt[6] == "true" ? 'checked' : null );	// Log Unblocked visitors?
+	$log_vis	= ( $opt[5] == "true" || $opt[6] == "true" ? 'inline' : 'none' );	// Show log tab?
 
 	// Create nonce
 	$nonce 	= yourls_create_nonce( 'httpBL' );
@@ -172,7 +172,8 @@ HTML;
 		
 	// populate table rows with flag data if there is any
 	$table = 'httpBL_wl';
-	$httpBL_white_listed = $ydb->get_results("SELECT * FROM `$table` ORDER BY timestamp DESC");
+	$sql = "SELECT * FROM `$table` ORDER BY timestamp DESC";
+	$httpBL_white_listed = $ydb->fetchObjects($sql);
 	$found_rows = false;
 	if($httpBL_white_listed) {
 		$found_rows = true;
@@ -214,7 +215,6 @@ HTML;
 }
 // Admin whitelist page 0.2 - adding to list
 function httpBL_wl_add() {
-	global $ydb;
 	
 	if (!empty($_POST) && isset($_POST['ip']) && isset($_POST['notes'])){
 		// Try to determine IP automatically
@@ -236,7 +236,12 @@ function httpBL_wl_add() {
 		if ( $redundant_chk == true ) {
 			echo '<h3 style="color:green">IP was already in whitelist.</h3>';
 		} else {
-			$insert = $ydb->query("REPLACE INTO `httpBL_wl` (ip, notes) VALUES ('$ip', '$notes')");
+			global $ydb;
+			$table = 'httpBL_wl';
+			$binds = array('ip' => $ip, 'notes' => $notes);
+			$sql = "REPLACE INTO `$table`  (ip, notes) VALUES (:ip, :notes)";
+			$insert = $ydb->fetchAffected($sql, $binds);
+
 			echo '<h3 style="color:green">IP added to the whitelist. Have a nice day.</h3>';
 		}
 	}
@@ -245,11 +250,15 @@ function httpBL_wl_add() {
 }
 // / Admiin whitelist page 0.3 - removing from list
 function httpBL_wl_remove() {
-	global $ydb;
 
 	if( isset($_GET['ip']) ) {
 		$ip = $_GET['ip'];
-        	$delete = $ydb->query("DELETE FROM `httpBL_wl` WHERE ip='$ip'");
+			global $ydb;
+			$table = 'httpBL_wl';
+			$binds = array('ip' => $ip, 'notes' => $notes);
+			$sql = "DELETE FROM `$table`  WHERE ip=:ip";
+			$delete = $ydb->fetchAffected($sql, $binds);
+
         	echo '<h3 style="color:green">IP removed from the whitelist. Have a nice day.</h3>';
 	}
 	httpBL_wl_list();
@@ -294,7 +303,11 @@ function httpBL_log_view($log_vis,$nonce) {
 					<tbody>
 HTML;
 		// populate table rows with flag data if there is any
-		$logs = $ydb->get_results("SELECT * FROM `httpBL_log` ORDER BY timestamp DESC");
+
+		$table = 'httpBL_log';
+		$sql = "SELECT * FROM `$table` ORDER BY timestamp DESC";
+		$logs = $ydb->fetchObjects($sql);
+
 		$found_rows = false;
 		if($logs) {
 			$found_rows = true;
@@ -354,7 +367,12 @@ function httpBL_flush_logs() {
 			$init_log_1 = yourls_get_option('httpBL_init_log');
 
 			if ($init_log_1 !== false) {
-				$ydb->query("TRUNCATE TABLE `httpBL_log`");
+
+				global $ydb;
+				$table = 'httpBL_log';
+				$sql = "TRUNCATE TABLE `$table`";
+				$ydb->fetchAffected($sql);
+
 				yourls_update_option('httpBL_init_log', time());
 				$init_log_2 = yourls_get_option('httpBL_init_log');
 				if ($init_log_2 == false || $init_log_1 == $init_log_2) {
@@ -372,7 +390,12 @@ function httpBL_flush_wl() {
 		// Check nonce
 			$init_wl_1 = yourls_get_option('httpBL_init_wl');
 			if ($init_wl_1 !== false) {
-				$ydb->query("TRUNCATE TABLE `httpBL_wl`");
+
+				global $ydb;
+				$table = 'httpBL_wl';
+				$sql = "TRUNCATE TABLE `$table`";
+				$ydb->fetchAffected($sql);
+
 				yourls_update_option('httpBL_init_wl', time());
 				$init_wl_2 = yourls_get_option('httpBL_init_wl');
 				if ($init_wl_2 == false || $init_wl_1 == $init_wl_2) {
@@ -438,8 +461,11 @@ function httpBL_wl_chk($ip) {
 	global $ydb;
 
 	$result = false;
-	
-	$w_listed = $ydb->get_row("SELECT * FROM `httpBL_wl` WHERE `ip` = '$ip'");
+
+	$table = 'httpBL_wl';
+	$binds = array('ip' => $ip);
+	$sql = "SELECT * FROM `$table`  WHERE `ip` = :ip";
+	$w_listed = $ydb->fetchObject($sql, $binds);
 	
 	if( $w_listed ) $result = true;
 
@@ -492,7 +518,6 @@ function httpBL_check($opt) {
 }
 // Logging block and unblock events
 function httpBL_logme($block = false, $ip='', $typemeaning='',$threat='',$activity='') {
-	global $ydb;
 		
 	// Some stuff you could log for further analysis
 	$page = $_SERVER['REQUEST_URI'];
@@ -504,7 +529,12 @@ function httpBL_logme($block = false, $ip='', $typemeaning='',$threat='',$activi
 		$action = 'UNBLOCKED';
 	}
 
-	$insert = $ydb->query("INSERT INTO `httpBL_log` (action, ip, type, threat, activity, page, ua) VALUES ('$action', '$ip', '$typemeaning', '$threat', '$activity', '$page', '$ua')");
+	global $ydb;
+	$table = 'httpBL_log';
+	$binds = array('action' => $action, 'ip' => $ip, 'type' => $typemeaning, 'threat' => $threat, 'activity' => $activity, 'page' => $page, 'ua' => $ua);
+	$sql = "INSERT INTO `$table`  (action, ip, type, threat, activity, page, ua) VALUES (:action, :ip, :typemeaning, :threat, :activity, :page, :ua)";
+	$insert = $ydb->fetchAffected($sql, $binds);
+
 }
 // Primary blocking function
 function httpBL_blockme($ip,$typemeaning,$threat,$opt) {
@@ -562,7 +592,6 @@ function httpBL_display_blockpage($ip,$typemeaning,$threat) {
 yourls_add_action( 'activated_httpBL/plugin.php', 'httpBL_activated' );
 function httpBL_activated() {
 	global $ydb;
-
 	// Log table
 	$init_log = yourls_get_option('httpBL_init_log');
 	if ($init_log === false) {
@@ -580,7 +609,7 @@ function httpBL_activated() {
 		$table_httpBL_log .= "ua varchar(255) NOT NULL, ";
 		$table_httpBL_log .= "PRIMARY KEY (timestamp) ";
 		$table_httpBL_log .= ") ENGINE=MyISAM DEFAULT CHARSET=latin1;";
-		$tables = $ydb->query($table_httpBL_log);
+		$tables = $ydb->fetchAffected($table_httpBL_log);
 
 		yourls_update_option('httpBL_init_log', time());
 		$init_log = yourls_get_option('httpBL_init_log');
@@ -601,7 +630,7 @@ function httpBL_activated() {
 		$table_httpBL_wl .= "notes varchar(255) NOT NULL, ";
 		$table_httpBL_wl .= "PRIMARY KEY (timestamp) ";
 		$table_httpBL_wl .= ") ENGINE=MyISAM DEFAULT CHARSET=latin1;";
-		$tables = $ydb->query($table_httpBL_wl);
+		$tables = $ydb->fetchAffected($table_httpBL_wl);
 
 		yourls_update_option('httpBL_init_wl', time());
 		$init_wl = yourls_get_option('httpBL_init_wl');
@@ -622,7 +651,9 @@ function httpBL_deactivate() {
 		$init_log = yourls_get_option('httpBL_init_log');
 		if ($init_log !== false) {
 			yourls_delete_option('httpBL_init_log');
-			$ydb->query("DROP TABLE IF EXISTS `httpBL_log`");
+			$table = "httpBL_log";
+			$sql = "DROP TABLE IF EXISTS $table";
+			$ydb->fetchAffected($sql);
 		}
 	}
 	// Whitelist table
@@ -633,7 +664,9 @@ function httpBL_deactivate() {
 		$init_wl = yourls_get_option('httpBL_init_wl');
 		if ($init_wl !== false) {
 			yourls_delete_option('httpBL_init_wl');
-			$ydb->query("DROP TABLE IF EXISTS `httpBL_wl`");
+			$table = "httpBL_wl";
+			$sql = "DROP TABLE IF EXISTS $table";
+			$ydb->fetchAffected($sql);
 		}
 	}
 }
