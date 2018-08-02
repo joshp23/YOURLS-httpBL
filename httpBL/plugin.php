@@ -24,7 +24,7 @@ function httpBL_add_pages() {
 // Maybe insert some JS and CSS files to head
 yourls_add_action( 'html_head', 'httpBL_head' );
 function httpBL_head() {
-	if ( YOURLS_JP23_HEAD_FILES == false || YOURLS_JP23_HEAD_FILES == null ) {
+	if ( YOURLS_JP23_HEAD_FILES == !true ) {
 
 		define( 'YOURLS_JP23_HEAD_FILES', true );
 
