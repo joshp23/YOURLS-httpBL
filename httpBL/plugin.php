@@ -3,7 +3,7 @@
 Plugin Name: HTTP:BL
 Plugin URI: https://github.com/joshp23/YOURLS-httpBL
 Description: An implementation of Project Honeypot's http:BL for YOURLS
-Version: 2.0.2
+Version: 2.0.3
 Author: Josh Panter
 Author URI: https://unfettered.net
 **/
@@ -20,6 +20,20 @@ if (yourls_get_option('httpBL_init_log') === true) httpBL_human_check();
 yourls_add_action( 'plugins_loaded', 'httpBL_add_pages' );
 function httpBL_add_pages() {
         yourls_register_plugin_page( 'httpBL', 'HTTP:BL', 'httpBL_do_page' );
+}
+// Maybe insert some JS and CSS files to head
+yourls_add_action( 'html_head', 'httpBL_head' );
+function httpBL_head() {
+	if ( YOURLS_JP23_HEAD_FILES == false || YOURLS_JP23_HEAD_FILES == null ) {
+
+		define( 'YOURLS_JP23_HEAD_FILES', true );
+
+		echo "\n<! --------------------------JP23_HEAD_FILES Start-------------------------- >\n";
+		echo "<link rel=\"stylesheet\" href=\"/css/infos.css\" type=\"text/css\" media=\"screen\" />\n";
+		echo "<script src=\"/js/infos.js\" type=\"text/javascript\"></script>\n";
+		echo "<! --------------------------JP23_HEAD_FILES END---------------------------- >\n";
+
+	}
 }
 // Admin page
 function httpBL_do_page() {
@@ -44,8 +58,6 @@ function httpBL_do_page() {
 	$nonce 	= yourls_create_nonce( 'httpBL' );
 
 	echo <<<HTML
-	<link rel="stylesheet" href="/css/infos.css?v=1.7.2" type="text/css" media="screen" />
-	<script src="/js/infos.js?v=1.7.2" type="text/javascript"></script>
 
 	<div id="wrap">
 		<div id="tabs">
