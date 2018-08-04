@@ -3,7 +3,7 @@
 Plugin Name: HTTP:BL
 Plugin URI: https://github.com/joshp23/YOURLS-httpBL
 Description: An implementation of Project Honeypot's http:BL for YOURLS
-Version: 2.0.4
+Version: 2.0.5
 Author: Josh Panter
 Author URI: https://unfettered.net
 **/
@@ -24,12 +24,12 @@ function httpBL_add_pages() {
 // Maybe insert some JS and CSS files to head
 yourls_add_action( 'html_head', 'httpBL_head' );
 function httpBL_head() {
-	if ( YOURLS_JP23_HEAD_FILES == null ) {
+	if ( defined('YOURLS_JP23_HEAD_FILES') == false ) {
 		define( 'YOURLS_JP23_HEAD_FILES', true );
-
+		$home = YOURLS_SITE;
 		echo "\n<! --------------------------JP23_HEAD_FILES Start-------------------------- >\n";
-		echo "<link rel=\"stylesheet\" href=\"".yourls_site_url()."/css/infos.css?v=".YOURLS_VERSION."\" type=\"text/css\" media=\"screen\" />\n";
-		echo "<script src=\"".yourls_site_url()."/js/infos.js?v=".YOURLS_VERSION."\" type=\"text/javascript\"></script>\n";
+		echo "<link rel=\"stylesheet\" href=\"".$home."/css/infos.css?v=".YOURLS_VERSION."\" type=\"text/css\" media=\"screen\" />\n";
+		echo "<script src=\"".$home."/js/infos.js?v=".YOURLS_VERSION."\" type=\"text/javascript\"></script>\n";
 		echo "<! --------------------------JP23_HEAD_FILES END---------------------------- >\n";
 	}
 }
