@@ -28,9 +28,10 @@ function httpBL_head() {
 		define( 'YOURLS_JP23_HEAD_FILES', true );
 
 		echo "\n<! --------------------------JP23_HEAD_FILES Start-------------------------- >\n";
-		echo "<link rel=\"stylesheet\" href=\"".yourls_site_url()."/css/infos.css".YOURLS_VERSION."\" type=\"text/css\" media=\"screen\" />\n";
-		echo "<script src=\"".yourls_site_url()."/js/infos.js".YOURLS_VERSION."\" type=\"text/javascript\"></script>\n";
-		}
+		echo "<link rel=\"stylesheet\" href=\"".yourls_site_url()."/css/infos.css?v=".YOURLS_VERSION."\" type=\"text/css\" media=\"screen\" />\n";
+		echo "<script src=\"".yourls_site_url()."/js/infos.js?v=".YOURLS_VERSION."\" type=\"text/javascript\"></script>\n";
+		echo "<! --------------------------JP23_HEAD_FILES END---------------------------- >\n";
+	}
 }
 // Admin page
 function httpBL_do_page() {
