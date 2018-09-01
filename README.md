@@ -51,7 +51,7 @@ Scripts used for inspiration and/or copypasta:
 
 ===========================
 
-    Copyright (C) 2016 - 2017 Josh Panter
+    Copyright (C) 2016 - 2018 Josh Panter
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
