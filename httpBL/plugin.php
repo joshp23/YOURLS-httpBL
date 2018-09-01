@@ -3,13 +3,13 @@
 Plugin Name: HTTP:BL
 Plugin URI: https://github.com/joshp23/YOURLS-httpBL
 Description: An implementation of Project Honeypot's http:BL for YOURLS
-Version: 2.0.5
+Version: 2.0.6
 Author: Josh Panter
 Author URI: https://unfettered.net
 **/
 // No direct call
 if( !defined( 'YOURLS_ABSPATH' ) ) die();
-if (yourls_get_option('httpBL_init_log') === true) httpBL_human_check(); 
+if (yourls_get_option('httpBL_init_log') == true) httpBL_human_check(); 
 /*
  *
  *	Admin Page
@@ -542,7 +542,7 @@ function httpBL_logme($block = false, $ip='', $typemeaning='',$threat='',$activi
 	global $ydb;
 	$table = 'httpBL_log';
 	$binds = array('action' => $action, 'ip' => $ip, 'type' => $typemeaning, 'threat' => $threat, 'activity' => $activity, 'page' => $page, 'ua' => $ua);
-	$sql = "INSERT INTO `$table`  (action, ip, type, threat, activity, page, ua) VALUES (:action, :ip, :typemeaning, :threat, :activity, :page, :ua)";
+	$sql = "INSERT INTO `$table`  (action, ip, type, threat, activity, page, ua) VALUES (:action, :ip, :type, :threat, :activity, :page, :ua)";
 	$insert = $ydb->fetchAffected($sql, $binds);
 
 }
