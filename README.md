@@ -3,16 +3,17 @@ An implimentation of Project Honeypot's http:BL for YOURLS
 
 http:BL is a black list service from [Project Honeypot](https://www.projecthoneypot.org) with an API that is trivial to hook into. While other spam management services & plugins, such as [Phishtank](https://github.com/joshp23/YOURLS-Phishtank-2.0), can check outgoing links, content submissions, and re-check old redirects, Project Honeypot's http:BL acts as a gatekeeper, stopping malicious users at the door before they can do any damage.
 
-This plugin can help filter out spam submissions on a YOURLS public interface _and_ on the API. It will redirect any bad IP to an informative and customization friendly block/intercept page written with Bootstrap where any human users will be able to easily set a cookie and access the YOURLS installation. For the API users, it will simply send back an Error 403.
+This plugin can help filter out spam submissions on a YOURLS public interface _and_ on the API. It will redirect any bad IP to an informative and customization friendly block/intercept page written with Bootstrap. If greylisted, any human users will be able to easily set a cookie and access the YOURLS installation. For the API users, it will simply send back an Error 403.
 
 Here are a few of HTTP:BL's features
 
-1. All logs and settings are in the admin interface, no hand editing of any files (unless you want to)
-2. Use a custom intercept page for flagged IP's. Edit the template, or redirect to your own URL.
-3. Granular log keeping: log only event types that you want, or none at all.
-4. Flush the log table and start fresh whenever you want.
-5. Self-managing: this plugin will (optionally) drop its tables when deactivated, and will create its own tables on activation.
-6. Whitelist IP addressess to skip checks; autodetection of and 1-click addition of the current IP.
+1. All logs and settings are in the admin interface, no hand editing of any files (unless you want to).
+2. Configure threshold levels for blocking and greylisting per threat type (or use defaults for ease of use).
+3. Use either native YOURLS style or a custom intercept page for flagged IP's. Edit the template, or redirect to your own URL.
+4. Granular log keeping: log only event types that you want, or none at all.
+5. Flush the log table and start fresh whenever you want.
+6. Self-managing: this plugin will (optionally) drop its tables when deactivated, and will create its own tables on activation.
+7. Whitelist IP addressess to skip checks; autodetection and 1-click addition of the current IP.
 
 ## REQUIREMENTS
 
@@ -25,19 +26,25 @@ Here are a few of HTTP:BL's features
 1. Place the httpBL folder in YOURLS/user/plugins/
 2. Activate http:BL for Yourls in the Admin interface - sql tables should be made automatically
 3. Set options in the HTTP:BL options page. The default options are just fine. Clicking submit on various forms will enter the default values into the sql tables, but null values all fall back to default actions as well.
- 
+4. If using a custom URL for blocking, please note the following requests that will be sent to your URL
+	- `action` grey or blacklist
+	- `ip` the offending IP address
+	- `type` the threat type (eg: content spammer)
+	- `level` the threat level (0-255)
 
-#### NOTE: In order for this to work on your public page you have to make sure that 
-```
-// Start YOURLS engine
-require_once( dirname(__FILE__).'/includes/load-yourls.php' );
-```
-#### comes before anything else. If you are using the [Sleaky](https://github.com/Flynntes/Sleeky) interface, edit your Index.php file to put the above line before 
-```
+#### NOTE: 
+In order for this to work on your public page you have to make sure that  
+```  
+// Start YOURLS engine  
+require_once( dirname(__FILE__).'/includes/load-yourls.php' );  
+```  
+comes before anything else. If you are using the [Sleaky](https://github.com/Flynntes/Sleeky) interface, edit `index.php` to put the above line before  
+```  
 include 'header.php';
 ```
 
-#### NOTE: The sql table may need to be added manually using httpBL/assets/httpBL.sql 
+#### NOTE:
+The sql table may need to be added manually using `httpBL/assets/httpBL.sql`
 
 ### TODO:
 1. Add dynamic and randomized honeypot "quicklinks" to all rendered pages - this will likely come in the form of a custom index page, or footer script.

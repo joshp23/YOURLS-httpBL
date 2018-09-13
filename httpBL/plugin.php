@@ -3,7 +3,7 @@
 Plugin Name: HTTP:BL
 Plugin URI: https://github.com/joshp23/YOURLS-httpBL
 Description: An implementation of Project Honeypot's http:BL for YOURLS
-Version: 2.1.1
+Version: 2.2.0
 Author: Josh Panter
 Author URI: https://unfettered.net
 **/
@@ -42,7 +42,18 @@ function httpBL_do_page() {
 	$opt = httpBL_getops();
 
 	// Set some values for display
-	$url_chk 	= ( $opt[1] == "true" ? 'checked' : null );	// Use custom http:BL block page?
+	$bp = array("template" => "", "native" => "", "url" => "");
+	switch ($opt[1]) {
+		case 'native': 
+			$bp['native'] = 'selected';
+			break;
+		case 'topright':
+			$bo['url'] = 'url';
+			break;
+		default:
+			$bp['template'] = 'template';
+			break;
+	}
 	$drop_chk_wl 	= ( $opt[3] == "true" ? 'checked' : null );	// Drop white list on deactivate?
 	$drop_chk_log 	= ( $opt[4] == "true" ? 'checked' : null );	// Drop logs on deactivate?
 	$lb_chk 	= ( $opt[5] == "true" ? 'checked' : null );	// Log Blocked visitors?
@@ -73,18 +84,105 @@ function httpBL_do_page() {
 					<p>In order to use http:BL you need to have a Project Honeypot API key. For information on how to become a member of the project and get yourself a free key, please click <a href="https://www.projecthoneypot.org/" target="_blank">here</a>. Otherwise, please enter your key below.</p>
 					<p><label for="httpBL_api_key">Your Key  </label> <input type="text" size=20 id="httpBL_api_key" name="httpBL_api_key" value="$opt[0]" /></p>
 
+					<hr>
+					<h3>Threshold levels</h3>
+					<p>Threats are valued on a <a href="https://www.projecthoneypot.org/threat_info.php" target="_blank">scale</a> of 0 to 255, with 255 being the most elevated threat level. These settings define how different threats are handled based on this score: a setting of 0 will catch all threat levels, while a setting of 255 disables the check.</p>
+
+					<p><Strong>Threat Level Tolelrance</strong>: Threat levels above this threshold will be blocked.</p>
+					<p><strong>Grey Listing Tolelrance</strong>: Threat levels equal to or below this threshold will be presented a link to the site, bypassing checks for the rest of the session.</p>
+	
+					<table id="tolerance_table" class="tblSorter" border="1" cellpadding="5" style="border-collapse: collapse">
+						<thead>
+							<tr>
+								<th>Threat Type</th>
+								<th>Threat Level Tolerance</th>
+								<th>Grey Listing Tolerance</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Search Engine: </td>
+								<td><input type="number" id="httpBL_tlt_se" name="httpBL_tlt_se" min="0" max="255" value="{$opt[7]}"></td>
+								<td><input type="number" id="httpBL_glt_se" name="httpBL_glt_se" min="0" max="255" value="{$opt[8]}"></td>
+							</tr>
+							<tr>
+								<td>Suspicious: </td>
+								<td><input type="number" id="httpBL_tlt_s" name="httpBL_tlt_s" min="0" max="255" value="{$opt[9]}"></td>
+								<td><input type="number" id="httpBL_glt_s" name="httpBL_glt_s" min="0" max="255" value="{$opt[10]}"></td>
+							</tr>
+							<tr>
+								<td>Harvester: </td>
+								<td><input type="number" id="httpBL_tlt_h" name="httpBL_tlt_h" min="0" max="255" value="{$opt[11]}"></td>
+								<td><input type="number" id="httpBL_glt_h" name="httpBL_glt_h" min="0" max="255" value="{$opt[12]}"></td>
+							</tr>
+							<tr>
+								<td>Comment Spammer: </td>
+								<td>All Comment Spammers are blocked</td>
+								<td><input type="number" id="httpBL_glt_cs" name="httpBL_glt_cs" min="20" max="255" value="{$opt[13]}"></td>
+							</tr>
+						</tbody>
+					</table>
+
+					<hr>
+
 					<h3>Block Page</h3>
-					<div class="checkbox">
-					  <label>
-						<input name="httpBL_cstm_block_tgl" type="hidden" value="false" />
-						<input name="httpBL_cstm_block_tgl" type="checkbox" value="true" $url_chk >Use custom block page URL?
-					  </label>
+
+				 	<select id="httpBL_block_page" name="httpBL_block_page">
+					  <option value="template" {$bp['template']}>Use Template</option>
+					  <option value="native" {$bp['native']}>Native style</option>
+					  <option value="url" {$bp['url']}>Custom URL</option>
+					</select> </br>
+
+					<div id="httpBL_block_template" name="httpBL_block_template" style="display:none">
+						<p>This will cause a file called <code>blockpage.php</code> in this plugin's assets folder to be executed.</p>
 					</div>
-					<div>
-						<p>Setting the above option without setting this will fall back to default behavior.</p>
-						<p><label for="httpBL_cstm_block">Enter custome block page URL here</label> <input type="text" size=40 id="httpBL_cstm_block" name="httpBL_cstm_block" value="$opt[2]" /></p>
+
+					<div id="httpBL_block_native" name="httpBL_block_native" style="display:none">
+						<p>This will draw a page using YOURLS native style.</p>
+					</div>
+
+					<div id="httpBL_block_url" name="httpBL_block_url" style="display:none">
+						<p>Blocked users will be redirected to this URL with the following Request parameters:</p>
+							<ul>
+								<li><code>action</code> If the IP is to be grey or black listed</li>
+								<li><code>ip</code> The offending IP address</li>
+								<li><code>type</code> The threat type</li>
+								<li><code>level</code> The threat level</li>
+							</ul>
+						<p>If left blank, httpBL will fall back to template.</p>
+						<p>
+							<label for="httpBL_cstm_block">URL: </label> 
+							<input type="text" size=40 id="httpBL_cstm_block" name="httpBL_cstm_block" value="$opt[2]" />
+						</p>
 					</div>
 					
+					<script>
+						document.getElementById('httpBL_tlt_se').addEventListener('change', function () {
+							document.getElementById('httpBL_glt_se').min = this.value;
+						});
+
+						document.getElementById('httpBL_tlt_s').addEventListener('change', function () {
+							document.getElementById('httpBL_glt_s').min = this.value;
+						});
+
+						document.getElementById('httpBL_tlt_h').addEventListener('change', function () {
+							document.getElementById('httpBL_glt_h').min = this.value;
+						});
+
+						document.getElementById('httpBL_block_page').addEventListener('change', function () {
+							var styleT = this.value == "template" ? 'block' : 'none';
+							document.getElementById('httpBL_block_template').style.display = styleT;
+
+							var styleN = this.value == "native" ? 'block' : 'none';
+							document.getElementById('httpBL_block_native').style.display = styleN;
+
+							var styleU = this.value == "url" ? 'block' : 'none';
+							document.getElementById('httpBL_block_url').style.display = styleU;
+						});
+					</script>
+
+					<hr>
+
 					<h3>Table Management</h3>
 					
 					<p>Would you like to keep logs?</p>
@@ -373,12 +471,19 @@ function httpBL_update_opts() {
 		yourls_verify_nonce( 'httpBL' );
 		// Set options
 		yourls_update_option( 'httpBL_api_key', $_POST['httpBL_api_key'] );
-		if( isset($_POST['httpBL_cstm_block_tgl'])) yourls_update_option( 'httpBL_cstm_block_tgl', $_POST['httpBL_cstm_block_tgl'] );
+		if( isset($_POST['httpBL_block_page'])) yourls_update_option( 'httpBL_block_page', $_POST['httpBL_block_page'] );
 		if( isset($_POST['httpBL_cstm_block'])) yourls_update_option( 'httpBL_cstm_block', $_POST['httpBL_cstm_block'] );
 		if( isset( $_POST['httpBL_table_drop_log'])) yourls_update_option( 'httpBL_table_drop_log', $_POST['httpBL_table_drop_log'] );
 		if( isset( $_POST['httpBL_table_drop_wl'])) yourls_update_option( 'httpBL_table_drop_wl', $_POST['httpBL_table_drop_wl'] );
 		if( isset( $_POST['httpBL_log_blocked'])) yourls_update_option( 'httpBL_log_blocked', $_POST['httpBL_log_blocked'] );
 		if( isset( $_POST['httpBL_log_unblocked'])) yourls_update_option( 'httpBL_log_unblocked', $_POST['httpBL_log_unblocked'] );
+		if( isset( $_POST['httpBL_tlt_se'])) yourls_update_option( 'httpBL_tlt_se', $_POST['httpBL_tlt_se'] );
+		if( isset( $_POST['httpBL_glt_se'])) yourls_update_option( 'httpBL_glt_se', $_POST['httpBL_glt_se'] );
+		if( isset( $_POST['httpBL_tlt_s'])) yourls_update_option( 'httpBL_tlt_s', $_POST['httpBL_tlt_s'] );
+		if( isset( $_POST['httpBL_glt_s'])) yourls_update_option( 'httpBL_glt_s', $_POST['httpBL_glt_s'] );
+		if( isset( $_POST['httpBL_tlt_h'])) yourls_update_option( 'httpBL_tlt_h', $_POST['httpBL_tlt_h'] );
+		if( isset( $_POST['httpBL_glt_h'])) yourls_update_option( 'httpBL_glt_h', $_POST['httpBL_glt_h'] );
+		if( isset( $_POST['httpBL_glt_cs'])) yourls_update_option( 'httpBL_glt_cs', $_POST['httpBL_glt_cs'] );
 	}
 }
 // Flush logs
@@ -447,28 +552,49 @@ function httpBL_getops() {
 
 	// Get values from DB
 	$key = yourls_get_option( 'httpBL_api_key' );
-	$cbt = yourls_get_option( 'httpBL_cstm_block_tgl' );
+	$bp  = yourls_get_option( 'httpBL_block_page' );
 	$cb  = yourls_get_option( 'httpBL_cstm_block' );
 	$tdw = yourls_get_option( 'httpBL_table_drop_wl' );
 	$tdl = yourls_get_option( 'httpBL_table_drop_log' );
 	$lx  = yourls_get_option( 'httpBL_log_blocked' );
 	$l0  = yourls_get_option( 'httpBL_log_unblocked' );
+	$tse = yourls_get_option( 'httpBL_tlt_se' );
+	$gse = yourls_get_option( 'httpBL_glt_se' );
+	$ts  = yourls_get_option( 'httpBL_tlt_s' );
+	$gs  = yourls_get_option( 'httpBL_glt_s' );
+	$th  = yourls_get_option( 'httpBL_tlt_h' );
+	$gh  = yourls_get_option( 'httpBL_glt_h' );
+	$gcs = yourls_get_option( 'httpBL_glt_cs' );
 
 	// Set defaults if necessary
-	if( $cbt == null ) $cbt = 'false';
+	if( $bp == null )  $bp  = 'template';
 	if( $tdw == null ) $tdw = 'true';
 	if( $tdl == null ) $tdw = 'true';
 	if( $lx  == null ) $lx  = 'false';
 	if( $l0  == null ) $l0  = 'false';
+	if( $tse == null ) $tse = 0;
+	if( $gse == null ) $gse = 20;
+	if( $ts  == null ) $ts  = 0;
+	if( $gs  == null ) $gs  = 20;
+	if( $th  == null ) $th  = 0;
+	if( $gh  == null ) $gh  = 20;
+	if( $gcs == null ) $gcs = 20;
 
 	return array(
 		$key,	// $opt[0]
-		$cbt,	// $opt[1]
+		$bp,	// $opt[1]
 		$cb,	// $opt[2]
 		$tdw,	// $opt[3]
 		$tdl,	// $opt[4]
 		$lx,	// $opt[5]
-		$l0		// $opt[6]
+		$l0,	// $opt[6]
+		$tse,	// $opt[7]
+		$gse,	// $opt[8]
+		$ts,	// $opt[9]
+		$gs,	// $opt[10]
+		$th,	// $opt[11]
+		$gh,	// $opt[12]
+		$gcs	// $opt[13]
 	);
 }
 // Initial cookie check
@@ -514,13 +640,12 @@ function httpBL_check($opt, $ip) {
 	$lookup = gethostbyname($querry);
 	// check query response
 	$result = explode( '.', $lookup);
-	
 	if ($result[0] == 127) {
 		// query successful !
 		$activity = $result[1];
 		$threat = $result[2];
 		$type = $result[3];
-		
+
 		$typemeaning = '';
 		if ($type == 0) $typemeaning = 'Search Engine';
 		if ($type == 1) $typemeaning = 'Suspicious';
@@ -530,20 +655,48 @@ function httpBL_check($opt, $ip) {
 		if ($type == 5) $typemeaning = 'Suspicious & Comment Spammer';
 		if ($type == 6) $typemeaning = 'Harvester & Comment Spammer';
 		if ($type == 7) $typemeaning = 'Suspicious, Harvester, & Comment Spammer';
-		
-		
+
 		// Now determine some blocking policy
-		if (
-		($type >= 4 && $threat > 0) // Comment spammer with any threat level
-			||
-		($type < 4 && $threat > 20) // Other types, with threat level greater than 20
-		) {
-			$block = true;
+		switch( $type ) {
+			// Search Engine with the configured value
+			case 0:
+				if ( $threat > $opt[7] ) $block = true;
+				if ( $threat <= $opt[8] ) $greyList = true;
+				break;
+			// Suspicious activity with the configured value
+			case 1:
+				if ( $threat > $opt[9] ) $block = true;
+				if ( $threat <= $opt[10] ) $greyList = true;
+				break;
+			// Harvester with the configured value
+			case 2:
+				if ( $threat > $opt[11] ) $block = true;
+				if ( $threat <= $opt[12] ) $greyList = true;
+				break;
+			// Suspicious & Harvester with the configured values
+			case 3:
+				$thresholdT = min( $opt[9], $opt[11] ); // get the lowest threshold
+				if ( $threat > $thresholdT ) $block = true;
+				$thresholdG = min( $opt[10], $opt[12] ); // get the lowest threshold
+				if ( $threat <= $thresholdG ) $greyList = true;
+				break;
+			// Comment spammer with any threat level, appropriate greylist
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+				if ( $threat > 0 ) $block = true;
+				if ( $threat <= $opt[13] ) $greyList = true;
+				break;
+			default:
+				$block = true;
+				$greyList = true;
+				break;
 		}
-		
+
 		if ($block) {
 			if ($opt[5] == "true") httpBL_logme($block,$ip,$typemeaning,$threat,$activity);
-			httpBL_blockme($ip,$typemeaning,$threat,$opt);
+			httpBL_blockme($ip,$typemeaning,$threat,$greyList,$opt);
 		}
 	
 	}
@@ -572,7 +725,7 @@ function httpBL_logme($block = false, $ip='', $typemeaning='',$threat='',$activi
 	}
 }
 // Primary blocking function
-function httpBL_blockme($ip,$typemeaning,$threat,$opt) {
+function httpBL_blockme($ip,$typemeaning,$threat,$greyList,$opt) {
 	// API mode 
 	if ( yourls_is_API() ) {
 		$format = ( isset($_REQUEST['format']) ? $_REQUEST['format'] : 'xml' );
@@ -586,28 +739,41 @@ function httpBL_blockme($ip,$typemeaning,$threat,$opt) {
 		die();
 	// Regular Mode
 	} else {
-		// use custom block page?
-		if (($opt[1] == "true") && ($opt[2] !== '')) {
-			// Send to custom block page and die
-			yourls_redirect( $opt[2], 302 );
-			die ();
+		// Where do we send the offending ip?
+		switch ($opt[1]) {
+			case 'native': 
+				httpBL_display_blockpage_native($ip,$typemeaning,$threat,$greyList);
+				break;
+			case 'url':
+				if ($opt[2] !== '') {
+					// Send to custom block page and die
+					$action = $greylist ? 'greylist' : 'blacklist';
+					$url = $opt[2].'?action='.$action.'&ip='.$ip.'&type='.$typemeaning.'&level='.$threat;
+					yourls_redirect( $url, 302 );
+					die ();
+					break; // likely overkill, however: berevity
+				}
+			default:
+				httpBL_display_blockpage_template($ip,$typemeaning,$threat,$greyList);
+				break;
 		}
-		// Or go to default
-		httpBL_display_blockpage($ip,$typemeaning,$threat);
 	}
 }
 // Secondary block function: display template block page
-function httpBL_display_blockpage($ip,$typemeaning,$threat) {
+function httpBL_display_blockpage_template($ip,$typemeaning,$threat,$greyList) {
 
-	$img   = yourls_plugin_url( dirname( __FILE__ ).'/assets/no-entry.png' );
-	$css   = yourls_plugin_url( dirname( __FILE__ ).'/assets/bootstrap.min.css' );
+	$img = yourls_plugin_url( dirname( __FILE__ ).'/assets/no-entry.png' );
+	$css = yourls_plugin_url( dirname( __FILE__ ).'/assets/bootstrap.min.css' );
+	if($greyList)
+		$greyList = '<p>If you <strong>ARE NOT</strong> a bot of any kind, simply <a href="javascript:letmein()">click here</a> to gain access.</p>';
 
 	$vars = array();
-		$vars['ip'] = $ip;
-		$vars['typemeaning'] = $typemeaning;
-		$vars['threat'] = $threat;
-		$vars['img'] = $img;
-		$vars['css'] = $css;
+		$vars['ip'] 			= $ip;
+		$vars['typemeaning'] 	= $typemeaning;
+		$vars['threat'] 		= $threat;
+		$vars['img'] 			= $img;
+		$vars['css'] 			= $css;
+		$vars['greyList'] 		= $greyList;
 
 	$blockpage = file_get_contents( dirname( __FILE__ ) . '/assets/blockpage.php' );
 	// Replace all %stuff% in intercept.php with variable $stuff
@@ -615,6 +781,68 @@ function httpBL_display_blockpage($ip,$typemeaning,$threat) {
 
 	echo $blockpage;
 
+	die();
+}
+// Secondary block function: display template block page
+function httpBL_display_blockpage_native($ip,$typemeaning,$threat,$greyList) {
+
+	$img   = yourls_plugin_url( dirname( __FILE__ ).'/assets/no-entry.png' );
+	if($greyList)
+		$greyList = '<p>If you <strong>ARE NOT</strong> a bot of any kind, simply <a href="javascript:letmein()">click here</a> to gain access.</p>';
+	$footer = yourls_s( 'Powered by %s', '<a href="http://yourls.org/" title="YOURLS">YOURLS</a> v ' . YOURLS_VERSION );
+	$debug = null;
+	if( defined( 'YOURLS_DEBUG' ) && YOURLS_DEBUG == true ) 
+		$debug = '<div style="text-align:left"><pre>'.join( "\n", yourls_get_debug_log() ).'</div>';
+
+	require_once( YOURLS_INC.'/functions-html.php' );
+	yourls_html_head( 'httpBL', 'ALERT!' );	//html, body, and a div tags are inclided
+	yourls_html_logo();
+	echo <<<HTML
+	<div style="padding:15px 0px 0px 0px;" >
+			<div style="display: inline-block; text-align: left">
+				<h2 class="text-danger" style="text-align:center;"><img src="$img" width="30" height="30"/> Forbidden: Access Denied <img src="$img" width="30" height="30"/></h2>
+				</br>
+				<p>Your IP: <strong>$ip</strong>, has been flagged by <a href='https://www.projecthoneypot.org' target='_blank'>Project Honey Pot</a> due to the following: 
+				<ul>
+					<li>Behavior Type: <strong>$typemeaning</strong></li>
+					<li>Threat Level: <strong>$threat</strong></li>
+				</ul>
+				<p>Information regarding threat levels can be found <a href="https://www.projecthoneypot.org/threat_info.php" target="_blank">here</a>.</p>
+				$greyList
+				<p style="display:none;">Otherwise, please have fun with <a href="http://planetozh.com/smelly.php">this page</a></p>
+				<p>Thank you.</p>
+			</div>
+	</div>
+</div>
+<footer id="footer" role="contentinfo"><p>
+	<script type="text/javascript">
+		function setcookie( name, value, expires, path, domain, secure ) {
+			// set time, it's in milliseconds
+			var today = new Date();
+			today.setTime( today.getTime() );
+
+			if ( expires ) {
+				expires = expires * 1000 * 60 * 60 * 24;
+			}
+			var expires_date = new Date( today.getTime() + (expires) );
+
+			document.cookie = name + "=" +escape( value ) +
+			( ( expires ) ? ";expires=" + expires_date.toGMTString() : "" ) + 
+			( ( path ) ? ";path=" + path : "" ) + 
+			( ( domain ) ? ";domain=" + domain : "" ) +
+			( ( secure ) ? ";secure" : "" );
+		}	
+		function letmein() {
+			setcookie('notabot','true',1,'/', '', '');
+			location.reload(true);
+		}
+	</script>
+	$footer
+</footer>
+$debug
+</body>
+</html>
+HTML;
 	die();
 }
 /*

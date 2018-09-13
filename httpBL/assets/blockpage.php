@@ -8,7 +8,6 @@ header('HTTP/1.0 403 Forbidden');
 ?>
 <html lang="en">
 	<head>
-
 		<meta charset="utf-8">
 		<title>ALERT!</title>
 		<link rel="icon" href="%img%" type="image/png" />
@@ -37,13 +36,9 @@ header('HTTP/1.0 403 Forbidden');
 						<li>Behavior Type: <strong>%typemeaning%</strong></li>
 						<li>Threat Level: <strong>%threat%</strong></li>
 					</ul>
-				
 					<p>Information regarding threat levels can be found <a href="https://www.projecthoneypot.org/threat_info.php" target="_blank">here</a>.</p>
-
-					<p>If you <strong>ARE NOT</strong> a bot of any kind, simply <a href="javascript:letmein()">click here</a> to gain access.</p>
+					%greyList%
 					<p style="display:none;">Otherwise, please have fun with <a href="http://planetozh.com/smelly.php">this page</a></p>
-				
-
 					<p>Thank you.</p>
 	    			</div>
 			</div>
