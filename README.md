@@ -14,6 +14,7 @@ Here are a few of HTTP:BL's features
 5. Flush the log table and start fresh whenever you want.
 6. Self-managing: this plugin will (optionally) drop its tables when deactivated, and will create its own tables on activation.
 7. Whitelist IP addressess to skip checks; autodetection and 1-click addition of the current IP.
+8. An API for White-List maintanence.
 
 ## REQUIREMENTS
 
@@ -31,6 +32,7 @@ Here are a few of HTTP:BL's features
 	- `ip` the offending IP address
 	- `type` the threat type (eg: content spammer)
 	- `level` the threat level (0-255)
+5. For information regarding the API, see the http:BL page in the Admin area.
 
 #### NOTE: 
 In order for this to work on your public page you have to make sure that  
@@ -45,6 +47,10 @@ include 'header.php';
 
 #### NOTE:
 The sql table may need to be added manually using `httpBL/assets/httpBL.sql`
+
+
+#### HINT:
+Use a script that manages callbacks and stores IP addresses in a flat file to update and delete IP's in the white-list automagically via cron.
 
 ### TODO:
 1. Add dynamic and randomized honeypot "quicklinks" to all rendered pages - this will likely come in the form of a custom index page, or footer script.

@@ -3,7 +3,7 @@
 Plugin Name: HTTP:BL
 Plugin URI: https://github.com/joshp23/YOURLS-httpBL
 Description: An implementation of Project Honeypot's http:BL for YOURLS
-Version: 2.2.0
+Version: 2.3.0
 Author: Josh Panter
 Author URI: https://unfettered.net
 **/
@@ -60,6 +60,11 @@ function httpBL_do_page() {
 	$lub_chk	= ( $opt[6] == "true" ? 'checked' : null );	// Log Unblocked visitors?
 	$log_vis	= ( $opt[5] == "true" || $opt[6] == "true" ? 'inline' : 'none' );	// Show log tab?
 
+	// Misc for cron example pre-formatting
+	$sig	= yourls_auth_signature();
+	$site   = YOURLS_SITE;
+	$cronEG   =  rawurlencode('<html><body><pre>0 * * * * wget -O - -q -t 1 <strong>'.$site.'</strong>/yourls-api.php?signature=<strong>'.$sig.'</strong>&format=simple&action=httpBL-WL >/dev/null 2>&1</pre></body></html>');
+
 	// Create nonce
 	$nonce 	= yourls_create_nonce( 'httpBL' );
 
@@ -73,6 +78,7 @@ function httpBL_do_page() {
 					<li class="selected"><a href="#stat_tab_behavior"><h2>http:BL Config</h2></a></li>
 					<li><a href="#stat_tab_httpBL_wl"><h2>White List</h2></a></li>
 					<li style="display:$log_vis;"><a href="#stat_tab_logs"><h2>Logs</h2></a></li>
+					<li><a href="#stat_tab_httpBL_api"><h2>API</h2></a></li>
 				</ul>
 			</div>
 
@@ -224,6 +230,21 @@ HTML;
 	httpBL_log_view($log_vis,$nonce);
 	// Close the html
 	echo <<<HTML
+			<div  id="stat_tab_httpBL_api" class="tab">
+				<h3>Definitions</h3>
+				<p>This plugin exposes a simple API for White List updating and maintanence. Using a cron job, an admin could keep an IP with a dynamically updating address current in the white-list.</p>
+				<ul>
+					<li><code>action=httpBL</code> If sent alone, the transmitting IP will be added to the white-list if it is absent.</li>
+					<li><code>note=STRING</code> Notes for when adding IP's to the white-list. Optional.</li>
+					<li><code>deleteIP=VALID_IP</code> Self explanatory. Optional.</li>
+				</ul>
+				<p><strong>Note: </strong> API use is restricted to valid users only.</p>
+
+				<h3>Cron example:</h3>
+				<p>Use the following pre-formatted example to set up a daily cron job to check for IP updates:</p>
+				 <iframe src="data:text/html;charset=utf-8,$cronEG" width="100%" height="51"/></iframe>
+				<p>Look here for more info on <a href="https://help.ubuntu.com/community/CronHowto" target="_blank" >cron</a> and <a href="https://www.gnu.org/software/wget/manual/html_node/HTTP-Options.html" target="_blank">wget</a>.</p>
+			</div>
 		</div>
 	</div>
 HTML;
@@ -948,6 +969,122 @@ function httpBL_deactivate() {
 			} else {
 				$ydb->query("DROP TABLE IF EXISTS `$table`");
 			}
+		}
+	}
+}
+/*
+ *
+ *	API
+ *
+ * action=httpBL-WL
+ *
+ * Optional:
+ * notes='STRING'
+ *
+ * Alternate:
+ * deleteIP='IP_ADDRESS'
+ *
+*/
+// This funtion exposes an API to check and whitelist an IP (think cron)
+yourls_add_filter( 'api_action_httpBL-WL', 'httpBL_ip_API' );
+function httpBL_ip_API() {
+	// only authorized users
+	$auth = yourls_is_valid_user();
+	if( $auth !== true ) {
+		$format = ( isset($_REQUEST['format']) ? $_REQUEST['format'] : 'xml' );
+		$callback = ( isset($_REQUEST['callback']) ? $_REQUEST['callback'] : '' );
+		yourls_api_output( $format, array(
+			'simple' => $auth,
+			'message' => $auth,
+			'errorCode' => 403,
+			'callback' => $callback,
+		) );
+	}
+
+	// Stripping an IP of WL status
+	if( isset ( $_REQUEST['deleteIP'] ) ) {
+		$ip = $_REQUEST['deleteIP'];
+		// Is it in the db?
+		if( httpBL_wl_chk($ip) ) {
+			// try to remove it
+			global $ydb;
+			$table = 'httpBL_wl';
+			if (version_compare(YOURLS_VERSION, '1.7.3') >= 0) {
+				$binds = array('ip' => $ip);
+				$sql = "DELETE FROM `$table`  WHERE ip=:ip";
+				$delete = $ydb->fetchAffected($sql, $binds);
+			} else {
+				$delete = $ydb->query("DELETE FROM `$table` WHERE ip='$ip'");
+			}
+
+			if( $delete ) {
+				// Success
+				return array(
+					'statusCode' => 200,
+					'code'		 => 1,
+					'simple'     => "IP removed from whitelist..",
+					'message'    => 'IP_status: removed',
+				);
+			} else {
+				// DB Failure
+				return array(
+					'statusCode' => 500,
+					'code'		 => -1,
+					'simple'     => "Unknown error: IP not removed",
+					'message'    => 'Unknwon error',
+				);
+			}
+		} else { 
+			// Fail: MIA
+			return array(
+				'statusCode' => 404,
+				'code'		 => 0,
+				'simple'     => "IP not found in whitelist..",
+				'message'    => 'IP_status: not found',
+			);
+		}
+	}
+
+	$ip = yourls_get_ip();
+	$wl = httpBL_wl_chk($ip);
+
+	if($wl) {
+		// no update requried
+		return array(
+			'statusCode' => 200,
+			'code'		 => 0,
+			'simple'     => "This IP is already in the whitelist. Nothing to do here.",
+			'message'    => 'IP_status: already listed',
+		);
+	} else {
+		// prepare notes
+		$notes = ( isset( $_REQUEST['notes'] ) ? $_REQUEST['notes'] : 'Added via API' );
+
+		global $ydb;
+		$table = 'httpBL_wl';
+		if (version_compare(YOURLS_VERSION, '1.7.3') >= 0) {
+			$binds = array('ip' => $ip, 'notes' => $notes);
+			$sql = "REPLACE INTO `$table`  (ip, notes) VALUES (:ip, :notes)";
+			$insert = $ydb->fetchAffected($sql, $binds);
+		} else {
+			$insert = $ydb->query("REPLACE INTO `httpBL_wl` (ip, notes) VALUES ('$ip', '$notes')");
+		}
+		if ($insert) {
+			// Success
+			return array(
+				'statusCode' => 200,
+				'code'		 => 1,
+				'simple'     => "$ip whitelisted",
+				'message'    => 'IP_status: updated',
+			);
+		} else {
+			// DB Failure
+			return array(
+				'statusCode' => 500,
+				'code'		 => -1,
+				'simple'     => "Unknown error: IP not inserted",
+				'message'    => 'Unknwon error',
+			);
 		}
 	}
 }
