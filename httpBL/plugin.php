@@ -3,7 +3,7 @@
 Plugin Name: HTTP:BL
 Plugin URI: https://github.com/joshp23/YOURLS-httpBL
 Description: An implementation of Project Honeypot's http:BL for YOURLS
-Version: 2.3.0
+Version: 2.3.1
 Author: Josh Panter
 Author URI: https://unfettered.net
 **/
@@ -234,7 +234,7 @@ HTML;
 				<h3>Definitions</h3>
 				<p>This plugin exposes a simple API for White List updating and maintanence. Using a cron job, an admin could keep an IP with a dynamically updating address current in the white-list.</p>
 				<ul>
-					<li><code>action=httpBL</code> If sent alone, the transmitting IP will be added to the white-list if it is absent.</li>
+					<li><code>action=httpBL-WL</code> If sent alone, the transmitting IP will be added to the white-list if it is absent.</li>
 					<li><code>note=STRING</code> Notes for when adding IP's to the white-list. Optional.</li>
 					<li><code>deleteIP=VALID_IP</code> Self explanatory. Optional.</li>
 				</ul>
