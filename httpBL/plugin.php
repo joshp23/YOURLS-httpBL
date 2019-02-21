@@ -3,7 +3,7 @@
 Plugin Name: HTTP:BL
 Plugin URI: https://github.com/joshp23/YOURLS-httpBL
 Description: An implementation of Project Honeypot's http:BL for YOURLS
-Version: 2.3.1
+Version: 2.3.2
 Author: Josh Panter
 Author URI: https://unfettered.net
 **/
@@ -351,16 +351,20 @@ function httpBL_wl_add() {
 		if (!$_POST['ip']) {
 			$ip = yourls_get_ip();
 			// note the event
-			if (!$_POST['notes'] == '') {
+			if (!$_POST['notes']) {
 				$notes = 'IP detected autoamtically';
 			} else {
 				$notes = $_POST['notes'];
 			}
 		} else {
 			$ip = $_POST['ip'];
+			if (!$_POST['notes']) {
+				$notes = 'IP added manually';
+			} else {
+				$notes = $_POST['notes'];
+			}
 		}
-		
-		$notes = $_POST['notes'];
+
 		$redundant_chk = httpBL_wl_chk($ip);
 		
 		if ( $redundant_chk == true ) {
@@ -885,7 +889,7 @@ function httpBL_activated() {
 		$table_httpBL_log  = "CREATE TABLE IF NOT EXISTS httpBL_log (";
 		$table_httpBL_log .= "timestamp timestamp NOT NULL default CURRENT_TIMESTAMP, ";
 		$table_httpBL_log .= "action varchar(9) NOT NULL, ";
-		$table_httpBL_log .= "ip varchar(15) NOT NULL, ";
+		$table_httpBL_log .= "ip varchar(255) NOT NULL, ";
 		$table_httpBL_log .= "type varchar(50) NOT NULL, ";
 		$table_httpBL_log .= "threat varchar(3) NOT NULL, ";
 		$table_httpBL_log .= "activity varchar(255) NOT NULL, ";
@@ -915,7 +919,7 @@ function httpBL_activated() {
 		// Create the flag table
 		$table_httpBL_wl  = "CREATE TABLE IF NOT EXISTS httpBL_wl (";
 		$table_httpBL_wl .= "timestamp timestamp NOT NULL default CURRENT_TIMESTAMP, ";
-		$table_httpBL_wl .= "ip varchar(15) NOT NULL, ";
+		$table_httpBL_wl .= "ip varchar(255) NOT NULL, ";
 		$table_httpBL_wl .= "notes varchar(255) NOT NULL, ";
 		$table_httpBL_wl .= "PRIMARY KEY (timestamp) ";
 		$table_httpBL_wl .= ") ENGINE=MyISAM DEFAULT CHARSET=latin1;";
