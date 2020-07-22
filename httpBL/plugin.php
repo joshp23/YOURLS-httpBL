@@ -3,13 +3,13 @@
 Plugin Name: HTTP:BL
 Plugin URI: https://github.com/joshp23/YOURLS-httpBL
 Description: An implementation of Project Honeypot's http:BL for YOURLS
-Version: 2.3.2
+Version: 2.4.0
 Author: Josh Panter
 Author URI: https://unfettered.net
 **/
 // No direct call
 if( !defined( 'YOURLS_ABSPATH' ) ) die();
-if (yourls_get_option('httpBL_init_log') == true) httpBL_human_check(); 
+if (yourls_get_option('httpBL_init_log') == true && !defined( 'HTTPBL_DB_UPDATE' ) ) httpBL_human_check();
 /*
  *
  *	Admin Page
@@ -297,13 +297,9 @@ HTML;
 		
 	// populate table rows with flag data if there is any
 	global $ydb;
-	$table = 'httpBL_wl';
-	if (version_compare(YOURLS_VERSION, '1.7.3') >= 0) {
-		$sql = "SELECT * FROM `$table` ORDER BY timestamp DESC";
-		$httpBL_white_listed = $ydb->fetchObjects($sql);
-	} else {
-		$httpBL_white_listed = $ydb->get_results("SELECT * FROM `$table` ORDER BY timestamp DESC");
-	}
+	$table = YOURLS_DB_PREFIX . 'httpBL_wl';
+	$sql = "SELECT * FROM `$table` ORDER BY timestamp DESC";
+	$httpBL_white_listed = $ydb->fetchObjects($sql);
 	$found_rows = false;
 	if($httpBL_white_listed) {
 		$found_rows = true;
@@ -371,14 +367,10 @@ function httpBL_wl_add() {
 			echo '<h3 style="color:green">IP was already in whitelist.</h3>';
 		} else {
 			global $ydb;
-			$table = 'httpBL_wl';
-			if (version_compare(YOURLS_VERSION, '1.7.3') >= 0) {
-				$binds = array('ip' => $ip, 'notes' => $notes);
-				$sql = "REPLACE INTO `$table`  (ip, notes) VALUES (:ip, :notes)";
-				$insert = $ydb->fetchAffected($sql, $binds);
-			} else {
-				$insert = $ydb->query("REPLACE INTO `httpBL_wl` (ip, notes) VALUES ('$ip', '$notes')");
-			}
+			$table = YOURLS_DB_PREFIX . 'httpBL_wl';
+			$binds = array('ip' => $ip, 'notes' => $notes);
+			$sql = "REPLACE INTO `$table`  (ip, notes) VALUES (:ip, :notes)";
+			$insert = $ydb->fetchAffected($sql, $binds);
 
 			echo '<h3 style="color:green">IP added to the whitelist. Have a nice day.</h3>';
 		}
@@ -392,14 +384,10 @@ function httpBL_wl_remove() {
 	if( isset($_GET['ip']) ) {
 		$ip = $_GET['ip'];
 			global $ydb;
-			$table = 'httpBL_wl';
-			if (version_compare(YOURLS_VERSION, '1.7.3') >= 0) {
-				$binds = array('ip' => $ip, 'notes' => $notes);
-				$sql = "DELETE FROM `$table`  WHERE ip=:ip";
-				$delete = $ydb->fetchAffected($sql, $binds);
-			} else {
-				$delete = $ydb->query("DELETE FROM `$table` WHERE ip='$ip'");
-			}
+			$table = YOURLS_DB_PREFIX . 'httpBL_wl';
+			$binds = array('ip' => $ip, 'notes' => $notes);
+			$sql = "DELETE FROM `$table`  WHERE ip=:ip";
+			$delete = $ydb->fetchAffected($sql, $binds);
 
         	echo '<h3 style="color:green">IP removed from the whitelist. Have a nice day.</h3>';
 	}
@@ -446,14 +434,9 @@ function httpBL_log_view($log_vis,$nonce) {
 HTML;
 		// populate table rows with flag data if there is any
 		global $ydb;
-		$table = 'httpBL_log';
-		if (version_compare(YOURLS_VERSION, '1.7.3') >= 0) {
-			$sql = "SELECT * FROM `$table` ORDER BY timestamp DESC";
-			$logs = $ydb->fetchObjects($sql);
-		} else {
-			$logs = $ydb->get_results("SELECT * FROM `$table` ORDER BY timestamp DESC");
-		}
-
+		$table = YOURLS_DB_PREFIX . 'httpBL_log';
+		$sql = "SELECT * FROM `$table` ORDER BY timestamp DESC";
+		$logs = $ydb->fetchObjects($sql);
 		$found_rows = false;
 		if($logs) {
 			$found_rows = true;
@@ -549,13 +532,10 @@ function httpBL_flush_wl() {
 			if ($init_wl_1 !== false) {
 
 				global $ydb;
-				$table = 'httpBL_wl';
-				if (version_compare(YOURLS_VERSION, '1.7.3') >= 0) {
-					$sql = "TRUNCATE TABLE `$table`";
-					$ydb->fetchAffected($sql);
-				} else {
-					$ydb->query("TRUNCATE TABLE `$table`");
-				}
+				$table = YOURLS_DB_PREFIX . 'httpBL_wl';
+				$sql = "TRUNCATE TABLE `$table`";
+				$ydb->fetchAffected($sql);
+
 				yourls_update_option('httpBL_init_wl', time());
 				$init_wl_2 = yourls_get_option('httpBL_init_wl');
 				if ($init_wl_2 == false || $init_wl_1 == $init_wl_2) {
@@ -643,15 +623,11 @@ function httpBL_wl_chk($ip) {
 
 	$result = false;
 
-	$table = 'httpBL_wl';
-	if (version_compare(YOURLS_VERSION, '1.7.3') >= 0) {
-		$binds = array('ip' => $ip);
-		$sql = "SELECT * FROM `$table`  WHERE `ip` = :ip";
-		$w_listed = $ydb->fetchObject($sql, $binds);
-	} else {
-		$w_listed = $ydb->get_row("SELECT * FROM `$table` WHERE `ip` = '$ip'");
-	}
-	
+	$table = YOURLS_DB_PREFIX . 'httpBL_wl';
+	$binds = array('ip' => $ip);
+	$sql = "SELECT * FROM `$table`  WHERE `ip` = :ip";
+	$w_listed = $ydb->fetchObject($sql, $binds);
+
 	if( $w_listed ) $result = true;
 
 	return $result;
@@ -740,14 +716,17 @@ function httpBL_logme($block = false, $ip='', $typemeaning='',$threat='',$activi
 	}
 
 	global $ydb;
-	$table = 'httpBL_log';
-	if (version_compare(YOURLS_VERSION, '1.7.3') >= 0) {
-		$binds = array('action' => $action, 'ip' => $ip, 'type' => $typemeaning, 'threat' => $threat, 'activity' => $activity, 'page' => $page, 'ua' => $ua);
-		$sql = "INSERT INTO `$table`  (action, ip, type, threat, activity, page, ua) VALUES (:action, :ip, :type, :threat, :activity, :page, :ua)";
-		$insert = $ydb->fetchAffected($sql, $binds);
-	} else {
-		$insert = $ydb->query("INSERT INTO `$table` (action, ip, type, threat, activity, page, ua) VALUES ('$action', '$ip', '$typemeaning', '$threat', '$activity', '$page', '$ua')");
-	}
+	$table = YOURLS_DB_PREFIX . 'httpBL_log';
+	$binds = array('action' => $action, 
+			'ip' => $ip, 
+			'type' => $typemeaning, 
+			'threat' => $threat, 
+			'activity' => $activity, 
+			'page' => $page, 
+			'ua' => $ua
+			);
+	$sql = "INSERT INTO `$table`  (action, ip, type, threat, activity, page, ua) VALUES (:action, :ip, :type, :threat, :activity, :page, :ua)";
+	$insert = $ydb->fetchAffected($sql, $binds);
 }
 // Primary blocking function
 function httpBL_blockme($ip,$typemeaning,$threat,$greyList,$opt) {
@@ -876,6 +855,39 @@ HTML;
  *
  *
 */
+
+// temporary update DB script
+if (!defined( 'HTTPBL_DB_UPDATE' ))
+	define( 'HTTPBL_DB_UPDATE', false );
+if( HTTPBL_DB_UPDATE )
+	yourls_add_action( 'plugins_loaded', 'httpbl_update_DB' );
+function httpbl_update_DB () {
+	global $ydb;
+	$tables =  array( 'httpBL_log' , 'httpBL_wl');
+	foreach( $tables as $table ) {
+		if ( YOURLS_DB_PREFIX ) {
+			try {
+				$sql = "DESCRIBE `".YOURLS_DB_PREFIX . $table."`";
+				$fix = $ydb->fetchAffected($sql);
+			} catch (PDOException $e) {
+				$sql = "RENAME TABLE `".$table."` TO  `".YOURLS_DB_PREFIX.$table."`";
+				$fix = $ydb->fetchAffected($sql);
+			}
+			
+			$table = YOURLS_DB_PREFIX . $table;
+		}
+		
+		try {
+		    	$sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
+		    		WHERE TABLE_NAME = `".$table."`
+		    		AND ENGINE = 'INNODB' LIMIT 1";
+		    	$fix = $ydb->fetchAffected($sql);
+	    	} catch (PDOException $e) {
+			$sql = "ALTER TABLE `".$table."` ENGINE = INNODB;";
+			$fix = $ydb->fetchAffected($sql);
+		}
+	}
+}
 // Create log table for this plugin when activated
 yourls_add_action( 'activated_httpBL/plugin.php', 'httpBL_activated' );
 function httpBL_activated() {
@@ -886,7 +898,8 @@ function httpBL_activated() {
 		// Create the init value
 		yourls_add_option('httpBL_init_log', time());
 		// Create the flag table
-		$table_httpBL_log  = "CREATE TABLE IF NOT EXISTS httpBL_log (";
+		$table = YOURLS_DB_PREFIX . "httpBL_log";
+		$table_httpBL_log  = "CREATE TABLE IF NOT EXISTS `".$table."` (";
 		$table_httpBL_log .= "timestamp timestamp NOT NULL default CURRENT_TIMESTAMP, ";
 		$table_httpBL_log .= "action varchar(9) NOT NULL, ";
 		$table_httpBL_log .= "ip varchar(255) NOT NULL, ";
@@ -896,19 +909,13 @@ function httpBL_activated() {
 		$table_httpBL_log .= "page varchar(255) NOT NULL, ";
 		$table_httpBL_log .= "ua varchar(255) NOT NULL, ";
 		$table_httpBL_log .= "PRIMARY KEY (timestamp) ";
-		$table_httpBL_log .= ") ENGINE=MyISAM DEFAULT CHARSET=latin1;";
-
-		if (version_compare(YOURLS_VERSION, '1.7.3') >= 0) {
-			$tables = $ydb->fetchAffected($table_httpBL_log);
-		} else {
-			$tables = $ydb->query($table_httpBL_log);
-		}
+		$table_httpBL_log .= ") ENGINE=INNODB DEFAULT CHARSET=latin1;";
+		$tables = $ydb->fetchAffected($table_httpBL_log);
 
 		yourls_update_option('httpBL_init_log', time());
 		$init_log = yourls_get_option('httpBL_init_log');
-		if ($init_log === false) {
+		if ($init_log === false)
 			die("Unable to properly enable http:BL due an apparent problem with the log database.");
-		}
 	}
 	
 	// Whitelist table
@@ -917,24 +924,19 @@ function httpBL_activated() {
 		// Create the init value
 		yourls_add_option('httpBL_init_wl', time());
 		// Create the flag table
-		$table_httpBL_wl  = "CREATE TABLE IF NOT EXISTS httpBL_wl (";
+		$table = YOURLS_DB_PREFIX . "httpBL_wl";
+		$table_httpBL_wl  = "CREATE TABLE IF NOT EXISTS `".$table."` (";
 		$table_httpBL_wl .= "timestamp timestamp NOT NULL default CURRENT_TIMESTAMP, ";
 		$table_httpBL_wl .= "ip varchar(255) NOT NULL, ";
 		$table_httpBL_wl .= "notes varchar(255) NOT NULL, ";
 		$table_httpBL_wl .= "PRIMARY KEY (timestamp) ";
-		$table_httpBL_wl .= ") ENGINE=MyISAM DEFAULT CHARSET=latin1;";
-
-		if (version_compare(YOURLS_VERSION, '1.7.3') >= 0) {
-			$tables = $ydb->fetchAffected($table_httpBL_wl);
-		} else {
-			$tables = $ydb->query($table_httpBL_wl);
-		}
-
+		$table_httpBL_wl .= ") ENGINE=INNODB DEFAULT CHARSET=latin1;";
+		$tables = $ydb->fetchAffected($table_httpBL_wl);
+		
 		yourls_update_option('httpBL_init_wl', time());
 		$init_wl = yourls_get_option('httpBL_init_wl');
-		if ($init_wl === false) {
+		if ($init_wl === false)
 			die("Unable to properly enable http:BL due an apparent problem with the whitelist database.");
-		}
 	}
 }
 	
@@ -949,30 +951,21 @@ function httpBL_deactivate() {
 		$init_log = yourls_get_option('httpBL_init_log');
 		if ($init_log !== false) {
 			yourls_delete_option('httpBL_init_log');
-			$table = "httpBL_log";
-			if (version_compare(YOURLS_VERSION, '1.7.3') >= 0) {
-				$sql = "DROP TABLE IF EXISTS $table";
-				$ydb->fetchAffected($sql);
-			} else {
-				$ydb->query("DROP TABLE IF EXISTS `$table`");
-			}
+			$table = YOURLS_DB_PREFIX . "httpBL_log";
+			$sql = "DROP TABLE IF EXISTS $table";
+			$ydb->fetchAffected($sql);
 		}
 	}
 	// Whitelist table
 	$httpBL_table_drop_wl = yourls_get_option('httpBL_table_drop_wl');
 	if ( $httpBL_table_drop_wl !== "false" ) {
 		global $ydb;
-	
 		$init_wl = yourls_get_option('httpBL_init_wl');
 		if ($init_wl !== false) {
 			yourls_delete_option('httpBL_init_wl');
-			$table = "httpBL_wl";
-			if (version_compare(YOURLS_VERSION, '1.7.3') >= 0) {
-				$sql = "DROP TABLE IF EXISTS $table";
-				$ydb->fetchAffected($sql);
-			} else {
-				$ydb->query("DROP TABLE IF EXISTS `$table`");
-			}
+			$table = YOURLS_DB_PREFIX . "httpBL_wl";
+			$sql = "DROP TABLE IF EXISTS $table";
+			$ydb->fetchAffected($sql);
 		}
 	}
 }
@@ -1012,14 +1005,10 @@ function httpBL_ip_API() {
 		if( httpBL_wl_chk($ip) ) {
 			// try to remove it
 			global $ydb;
-			$table = 'httpBL_wl';
-			if (version_compare(YOURLS_VERSION, '1.7.3') >= 0) {
-				$binds = array('ip' => $ip);
-				$sql = "DELETE FROM `$table`  WHERE ip=:ip";
-				$delete = $ydb->fetchAffected($sql, $binds);
-			} else {
-				$delete = $ydb->query("DELETE FROM `$table` WHERE ip='$ip'");
-			}
+			$table = YOURLS_DB_PREFIX . 'httpBL_wl';
+			$binds = array('ip' => $ip);
+			$sql = "DELETE FROM `$table`  WHERE ip=:ip";
+			$delete = $ydb->fetchAffected($sql, $binds);
 
 			if( $delete ) {
 				// Success
@@ -1065,14 +1054,10 @@ function httpBL_ip_API() {
 		$notes = ( isset( $_REQUEST['notes'] ) ? $_REQUEST['notes'] : 'Added via API' );
 
 		global $ydb;
-		$table = 'httpBL_wl';
-		if (version_compare(YOURLS_VERSION, '1.7.3') >= 0) {
-			$binds = array('ip' => $ip, 'notes' => $notes);
-			$sql = "REPLACE INTO `$table`  (ip, notes) VALUES (:ip, :notes)";
-			$insert = $ydb->fetchAffected($sql, $binds);
-		} else {
-			$insert = $ydb->query("REPLACE INTO `httpBL_wl` (ip, notes) VALUES ('$ip', '$notes')");
-		}
+		$table = YOURLS_DB_PREFIX . 'httpBL_wl';
+		$binds = array('ip' => $ip, 'notes' => $notes);
+		$sql = "REPLACE INTO `$table`  (ip, notes) VALUES (:ip, :notes)";
+		$insert = $ydb->fetchAffected($sql, $binds);
 		if ($insert) {
 			// Success
 			return array(

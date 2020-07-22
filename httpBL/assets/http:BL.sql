@@ -8,11 +8,11 @@ CREATE TABLE IF NOT EXISTS `httpBL_log` (
 `page` varchar(255) NOT NULL,
 `ua` varchar(255) NOT NULL,
 PRIMARY KEY (`timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=INNODB DEFAULT CHARSET=latin1;
 
 CREATE TABLE IF NOT EXISTS `httpBL_wl` (
 `timestamp` timestamp NOT NULL default CURRENT_TIMESTAMP,
 `ip` varchar(255) NOT NULL,
 `notes` varchar(255) NOT NULL,
 PRIMARY KEY (`timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=INNODB DEFAULT CHARSET=latin1;

@@ -34,8 +34,8 @@ Here are a few of HTTP:BL's features
 	- `level` the threat level (0-255)
 5. For information regarding the API, see the http:BL page in the Admin area.
 
-#### NOTE: 
-In order for this to work on your public page you have to make sure that  
+#### NOTES: 
+- In order for this to work on your public page you have to make sure that  
 ```  
 // Start YOURLS engine  
 require_once( dirname(__FILE__).'/includes/load-yourls.php' );  
@@ -45,9 +45,8 @@ comes before anything else. If you are using the [Sleaky](https://github.com/Fly
 include 'header.php';
 ```
 
-#### NOTE:
-The sql table may need to be added manually using `httpBL/assets/httpBL.sql`
-
+- The sql table may need to be added manually using `httpBL/assets/httpBL.sql`. If so, make sure to alter that file to reflect the `YOURLS_DB_PREFIX` setting in `config.php`.
+- set `define( 'HTTPBL_DB_UPDATE', true );` in `config.php` for one page load to update DB from v2.3.x
 
 #### HINT:
 Use a script that manages callbacks and stores IP addresses in a flat file to update and delete IP's in the white-list automagically via cron.
@@ -69,7 +68,7 @@ All of my published code is developed and maintained in spare time, if you would
 
 ===========================
 
-    Copyright (C) 2016 - 2018 Josh Panter
+    Copyright (C) 2016 Josh Panter
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
