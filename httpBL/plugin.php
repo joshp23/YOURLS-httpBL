@@ -3,7 +3,7 @@
 Plugin Name: HTTP:BL
 Plugin URI: https://github.com/joshp23/YOURLS-httpBL
 Description: An implementation of Project Honeypot's http:BL for YOURLS
-Version: 2.4.0
+Version: 2.5.0
 Author: Josh Panter
 Author URI: https://unfettered.net
 **/
@@ -88,7 +88,12 @@ function httpBL_do_page() {
 					<h3>Project Honeypot API Key</h3>
 
 					<p>In order to use http:BL you need to have a Project Honeypot API key. For information on how to become a member of the project and get yourself a free key, please click <a href="https://www.projecthoneypot.org/" target="_blank">here</a>. Otherwise, please enter your key below.</p>
-					<p><label for="httpBL_api_key">Your Key  </label> <input type="text" size=20 id="httpBL_api_key" name="httpBL_api_key" value="$opt[0]" /></p>
+					<p><input type="text" size=20 id="httpBL_api_key" name="httpBL_api_key" value="$opt[0]" /></p>
+					
+					<h3>Honeypot Link</h3>
+
+					<p>To insert Honeypot links into this site's html, enter the location of the link here.</p>
+					<p><input type="text" size=60 id="httpBL_honeypot" name="httpBL_honeypot" value="$opt[14]" /></p>
 
 					<hr>
 					<h3>Threshold levels</h3>
@@ -492,6 +497,7 @@ function httpBL_update_opts() {
 		if( isset( $_POST['httpBL_tlt_h'])) yourls_update_option( 'httpBL_tlt_h', $_POST['httpBL_tlt_h'] );
 		if( isset( $_POST['httpBL_glt_h'])) yourls_update_option( 'httpBL_glt_h', $_POST['httpBL_glt_h'] );
 		if( isset( $_POST['httpBL_glt_cs'])) yourls_update_option( 'httpBL_glt_cs', $_POST['httpBL_glt_cs'] );
+		if( isset( $_POST['httpBL_honeypot'])) yourls_update_option( 'httpBL_honeypot', $_POST['httpBL_honeypot'] );
 	}
 }
 // Flush logs
@@ -570,6 +576,7 @@ function httpBL_getops() {
 	$th  = yourls_get_option( 'httpBL_tlt_h' );
 	$gh  = yourls_get_option( 'httpBL_glt_h' );
 	$gcs = yourls_get_option( 'httpBL_glt_cs' );
+	$hpt = yourls_get_option( 'httpBL_honeypot' );
 
 	// Set defaults if necessary
 	if( $bp == null )  $bp  = 'template';
@@ -599,7 +606,8 @@ function httpBL_getops() {
 		$gs,	// $opt[10]
 		$th,	// $opt[11]
 		$gh,	// $opt[12]
-		$gcs	// $opt[13]
+		$gcs,	// $opt[13]
+		$hpt,	// $opt[14]
 	);
 }
 // Initial cookie check
@@ -1076,5 +1084,56 @@ function httpBL_ip_API() {
 			);
 		}
 	}
+}
+/*
+ *
+ *	Honeypot Links
+ *
+ *
+*/
+if ( yourls_get_option( httpBL_honeypot) )
+	yourls_add_filter( 'html_footer_text', 'httpBL_footer' );
+function httpBL_footer( $footer ) {
+	return $footer . "\n" . httpBL_link() . "\n";
+}
+function httpBL_link() {
+	$link = '';
+	$path = yourls_get_option('httpBL_honeypot');
+	$string = httpBL_string();
+
+	switch(mt_rand(1,5)) {
+		case 1:
+			$link = '<div style="display: none;"><a href="'.$path.'" title="'.$strin.'">'.$string.'</a></div>';
+			break;
+		case 2:
+			$link = '<a href="'.$path.'" style="display: none;" title="'.$string.'">'.$string.'</a>';
+			break;
+		case 3:
+			$link = '<a href="'.$path.'" style="display: none;" title="'.$string.'"><!-- '.$string.' --></a>';
+			break;
+		case 4:
+			$link = '<!-- <a href="'.$path.'" title="'.$string.'">'.$string.'</a> -->';
+			break;
+		case 5:
+			$link = '<a href="'.$path.'" style="display: none;" title="'.$string.'"></a>';
+			break;
+		default:
+	}
+	
+	return $link;
+}
+
+function httpBL_string() {
+	$string = '';
+	$vowels = array('a','e','i','o','u');  
+	$consonants = array( 'b','c','d','f','g','h','j','k','l','m','n','p','r','s','t','v','w','x','y','z' );  
+	$max = mt_rand( 5,32 ) / 2;
+	
+	for ( $i = 1; $i <= $max; $i++ ) {
+		$string .= $consonants[rand(0,19)];
+		$string .= $vowels[rand(0,4)];
+	}
+	
+	return $string;
 }
 ?>
