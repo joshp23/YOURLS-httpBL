@@ -3,7 +3,7 @@
 Plugin Name: HTTP:BL
 Plugin URI: https://github.com/joshp23/YOURLS-httpBL
 Description: An implementation of Project Honeypot's http:BL for YOURLS
-Version: 2.5.0
+Version: 2.5.1
 Author: Josh Panter
 Author URI: https://unfettered.net
 **/
@@ -1091,7 +1091,7 @@ function httpBL_ip_API() {
  *
  *
 */
-if ( yourls_get_option( httpBL_honeypot) )
+if ( yourls_get_option( 'httpBL_honeypot' ) )
 	yourls_add_filter( 'html_footer_text', 'httpBL_footer' );
 function httpBL_footer( $footer ) {
 	return $footer . "\n" . httpBL_link() . "\n";
