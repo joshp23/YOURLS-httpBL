@@ -3,7 +3,7 @@
 Plugin Name: HTTP:BL
 Plugin URI: https://github.com/joshp23/YOURLS-httpBL
 Description: An implementation of Project Honeypot's http:BL for YOURLS
-Version: 2.5.1
+Version: 2.5.2
 Author: Josh Panter
 Author URI: https://unfettered.net
 **/
@@ -1103,7 +1103,7 @@ function httpBL_link() {
 
 	switch(mt_rand(1,5)) {
 		case 1:
-			$link = '<div style="display: none;"><a href="'.$path.'" title="'.$strin.'">'.$string.'</a></div>';
+			$link = '<div style="display: none;"><a href="'.$path.'" title="'.$string.'">'.$string.'</a></div>';
 			break;
 		case 2:
 			$link = '<a href="'.$path.'" style="display: none;" title="'.$string.'">'.$string.'</a>';
